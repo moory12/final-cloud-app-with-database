@@ -101,7 +101,7 @@ def enroll(request, course_id):
         course.total_enrollment += 1
         course.save()
     
-    return HttpResponseRedirect(reverse(viewname='onlinecourse:course_details', args=(course.id,)))
+    return HttpResponseRedirect(reverse('onlinecourse:course_details', args=(course.id,)))
 
 
 # <HINT> Create a submit view to create an exam submission record for a course enrollment,
@@ -122,7 +122,7 @@ def submit(request, course_id):
         choice = Choice.objects.get(pk=answer)
         submission.choices.add(choice)
     submission.save()
-    return HttpResponseRedirect(viewname='onlinecourse:show_exam_result', args=(course.id,submission.id,))
+    return HttpResponseRedirect(reverse('onlinecourse:show_exam_result', args=(course.id,submission.id)))
 
 
 # <HINT> A example method to collect the selected choices from the exam form from the request object
@@ -146,16 +146,24 @@ def show_exam_result(request, course_id, submission_id):
     course = get_object_or_404(Course, pk=course_id)
     user = request.user
     context = {}
-    submissions = Submission.objects.get(submission_id)
+    submission = get_object_or_404(Submission,pk=submission_id)
+    choises = submission.choices.all()
     total_grade = 0
     user_grade = 0
-    for submission in submissions:
-        total_grade = total_grade + Question.objects.get(submission.choices.question_id).grade
-        if(Question.is_get_score(submission.choices)):
-            user_grade = user_grade + total_grade
+    questionsId = []
+    for choise in choises:
+        questionsId.append(choise.question_id.id)
+        if(Question.is_get_score(choise.question_id, selected_ids=[choise.id])):
+            user_grade = user_grade + choise.question_id.grade
     context['course'] = course
-    context['selected_ids'] = submissions.choices
-    context['grade'] = "{0}/{1}".format(user_grade, total_grade)
+    context['selected_ids'] = submission
+    questionsId = list(set(questionsId))
+    # TODO fix the logic and the calculation
+    for question in questionsId:
+        total_grade = total_grade + get_object_or_404(Question,pk=question).grade
+    score = user_grade / total_grade * 100
+    print(user_grade)
+    context['grade'] = score
     return render(request, 'onlinecourse/exam_result_bootstrap.html', context)
 
 
