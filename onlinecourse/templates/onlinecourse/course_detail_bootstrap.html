@@ -71,8 +71,10 @@
             -->
 
             {% for question in course.question_set.all %}
-            <form id="questionform" action="point to a submit view" method="post">
-                
+            <form id="questionform" action="submit/" method="post">
+                <input type="text" name="question_{{question.id}}"
+                class="form-check-input" id="{{question.id}}"
+                value="{{question.id}}" hidden>
                         <div class="card mt-1">
                             <div class="card-header"><h5>{{ question.question_text}}</h5></div>
                             {% csrf_token %}
@@ -88,9 +90,10 @@
                             </div>
                             {% endfor %}
                         </div>
+                        {% endfor %}
                     <input class="btn btn-success btn-block" type="submit" value="Submit">
             </form> 
-            {% endfor %}
+
         </div>
             {% endif %}
             <!--Check here to see more details Bootstrap checkbox
